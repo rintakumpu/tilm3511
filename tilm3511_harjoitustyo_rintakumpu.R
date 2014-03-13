@@ -1,12 +1,12 @@
-# Asetetaan työhakemisto
-
-wd <- "C:/Users/Lasse Rintakumpu/Documents/GitHub/tilm3511"
-wd <- "D:/Dropbox/Edu/Statistics/Peruskurssi B/Harjoitustyö/"
-setwd(wd)
-
 # TILM3511 -harjoitustyö, R-koodi
 # Lasse Rintakumpu, 63555
 # 11.3.2013
+
+# Asetetaan työhakemisto
+
+wd <- "C:/Users/Lasse Rintakumpu/Documents/GitHub/tilm3511"
+wd <- "D:/Dropbox/Edu/Statistics/Peruskurssi C/Harjoitustyö/"
+setwd(wd)
 
 # Funktio kirjastojen asentamiselle / lataamiselle
 
@@ -24,27 +24,24 @@ lapply(c("moments","car", "alr3"), lataa_kirjasto)
 
 talous <- read.csv("https://raw.github.com/rintakumpu/tilm3511/master/talous.csv", sep=";", dec=",");
 
-# Erotetaan havaintoaineistosta sukupuolittain nettotulot
+########################################
+# 1. Koulutustason vaikutus säästöihin #
+########################################
 
-nettotulot_miehet <- miehet$oma_tulo
-nettotulot_naiset <- naiset$oma_tulo
+# Poistetaan havaintoaineistosta kansakoulun / peruskoulun suorittaneet
 
-# sekä tyytyväisyys taloudelliseen tilanteeseen
-# Ryhmitellään tyytyvaisyys niin, 
-# että 1--2 => Tyytyväinen
-# 3--4 => Tyytymätön
+talous_koulutustaso <- subset(talous, koulutus != 1)
 
-tyytyvaisyys <- matrix(nrow=2,ncol=2)
-rownames(tyytyvaisyys) <- c("Mies", "Nainen")
-colnames(tyytyvaisyys) <- c("Tyytyväinen", "Tyytymätön")
-tyytyvaisyys[1,1] <- sum(miehet$taltyyt==1 | miehet$taltyyt==2)
-tyytyvaisyys[1,2] <- sum(miehet$taltyyt==3 | miehet$taltyyt==4)
-tyytyvaisyys[2,1] <- sum(naiset$taltyyt==1 | naiset$taltyyt==2)
-tyytyvaisyys[2,2] <- sum(naiset$taltyyt==3 | naiset$taltyyt==4)
+# Kuvaillaan dataa laatikko-janakuviolla
 
-#################
-# 1. Nettotulot #
-#################
+boxplot(talous_koulutustaso$saasto94~talous_koulutustaso$koulutus)
+
+# Jakaumat näyttävät kohtuullisen samoilta, testataan varianssien homogeenisuutta
+
+
+
+
+
 
 # Käytetään normaalikvantiilikuvaajaa sekä laatikko-janakuviota
 
@@ -119,9 +116,31 @@ t.test(nettotulot_m_muunnettu, nettotulot_n_muunnettu, alternative = "two.sided"
 # => Hylätään nollahypoteesi riskitasolla 0.05. Testin p-arvosta näemme,
 # että pienen riskitaso, jolla testi voitaisiin hylätä on 0.006064.
 
-###############################################
-# 2. Tyytyväisyys taloudelliseen tilanteeseen #
-###############################################
+##############################
+# 2. Iän vaikutus säästöihin #
+##############################
+
+# Kuvaillaan iän vaikutusta säästöihin sirontakuviolla
+
+plot(talous$saasto94~talous$ika)
+
+# Sirontakuvion perusteella iällä ja säästöillä näyttäisi olevan korrelaatio
+# Varmennetaan tämä:
+
+# Sovitetaan aineistoon lineaarinen regressiomalli
+
+reg <- lm(talous$saasto94~talous$ika)
+plot(reg)
+summary(reg)
+
+# Lineaarinen regressio on herkkä poikkeaville havainnoille
+# Sirontakuviosta huomataan, että havainnot 11, 116, 178 ovat selkeästi poikkeavia
+
+# Poistetaan havainnot ja sovitetaan suora uudelleen:
+
+# Testataan mallin sopivuutta
+
+
 
 # Käytetään aineiston kuvailuun histogrammia sekä ryhmäpylväskuviota.
 
