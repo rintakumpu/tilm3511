@@ -36,13 +36,43 @@ talous_koulutustaso <- subset(talous, koulutus != 1)
 
 # Kuvaillaan dataa sironta- ja laatikko-janakuviolla
 
-plot(talous_koulutustaso$koulutus, talous_koulutustaso$saasto94,
-     xlab="Koulutustaso", ylab="Säästöt vuonna 1994, euroa",
-     col=c("blue","red","magenta","black"), xlim=)
-plot(talous_koulutustaso$saasto94~as.factor(talous_koulutustaso$koulutus))
+# Sirontakuvio
 
-# Oletetaan havainnot toisistaan riippumattomiksi. Testataan varianssien homogeenisuutta.
-# Jakaumat eivät näytä normaaleilta. Käytetään testaukseen Brown-Forsythea.
+varit <- c("black","black","black","black")
+plot(rep(1,length(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==2])), 
+     talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==2], 
+     xlab="Koulutustaso", ylab="Markkaa",
+     col=varit[1], xlim=c(1,4), xaxt="n",
+     main="Säästöt 1994", pch = 1)
+points(rep(2,length(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==3])), 
+       talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==3], 
+       col=varit[2], pch = 2)
+points(rep(3,length(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==4])), 
+       talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==4], 
+       col=varit[3], pch = 3)
+points(rep(4,length(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==5])), 
+       talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==5], 
+       col=varit[4], pch = 4)
+abline(mean(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==2]),0,col=varit[1])
+abline(mean(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==3]),0,col=varit[2])
+abline(mean(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==4]),0,col=varit[3])
+abline(mean(talous_koulutustaso$saasto94[talous_koulutustaso$koulutus==5]),0,col=varit[4])
+axis(1, at = c(1,2,3,4), labels = c("Lukio", "Koulu", "Opisto", "Korkeakoulu"))
+pdf('scatterplot_koulutus.pdf')
+dev.off()
+
+# Laatikko-janakuvio
+
+plot(talous_koulutustaso$saasto94~as.factor(talous_koulutustaso$koulutus),
+     xlab="Koulutus", ylab="Markkaa", main="Säästöt 1994", xaxt="n")
+axis(1, at = c(1,2,3,4), labels = c("Lukio", "Koulu", "Opisto", "Korkeakoulu"))
+pdf('boxplot_koulutus.pdf')
+dev.off()
+
+# Oletetaan havainnot toisistaan riippumattomiksi.  
+
+# Testataan varianssien homogeenisuutta. 
+# Jakaumat eivät näytä normaaleilta, joten käytetään testaukseen Brown-Forsythea.
 # Tehdään testi tasolla 0.05.
 # H0: Luokkien varianssi sama.
 # Hv: Luokkien varianssi eri.
@@ -50,27 +80,35 @@ plot(talous_koulutustaso$saasto94~as.factor(talous_koulutustaso$koulutus))
 levene.test(talous_koulutustaso$saasto94, as.factor(talous_koulutustaso$koulutus))
 
 # Test Statistic = 1.1104, p-value = 0.3464 
-# => Hylätään Hv tasolla 0.05. Varianssit ovat samat.
+# => Hylätään Hv tasolla 0.05. Varianssit ovat homogeeniset.
 
 # Jakaumat eivät näytä normaaleilta, tarkastellaan normaalisuutta.
 qqnorm(talous_koulutustaso$saasto94)
+pdf('qqnorm_koulutus.pdf')
+dev.off()
+
 shapiro.test(talous_koulutustaso$saasto94)
 
 # W = 0.8943, p-value = 7.199e-10
 # => Normaalisuusoletus ei päde. Haetaan dataan optimaalinen potenssimuunnos.
+pt_saasto94 <- powerTransform(talous_koulutustaso$saasto94) # -0.001575101
 
-pt_saasto94 <- powerTransform(talous_koulutustaso$saasto94)
-# -0.001575101
+qqnorm(talous_koulutustaso$saasto94^-0.001575101)
+pdf('qqnorm_koulutus_muunnettu.pdf')
+dev.off()
+
 shapiro.test(talous_koulutustaso$saasto94^-0.001575101)
 # W = 0.995, p-value = 0.8181
-# => Näyttää huomattavasti paremmalta. Jatketaan muunnetuilla arvolla.
+# => Normaalisuusoletus nyt pätevä. Jatketaan muunnetuilla arvolla.
 
 saasto94_muunnettu <- (talous_koulutustaso$saasto94^-0.001575101)
 
-# Jatketaan säästöerojen tarkastelua. Testataan erojen tilastollista merkitsevyyttä tasolla 0.05.
+# Sirontakuvion perusteella erot säästöjen määrissä koulutustason funktiona
+# ovat pieniä.
+# Testataan erojen tilastollista merkitsevyyttä tasolla 0.05.
 
-# H0: Säästöissä ei eroa.
-# Hv: Säästöissä on eroa.
+# H0: Säästöissä ei eroa (mu1=mu2=mu3=mu4).
+# Hv: Säästöissä on eroa (exists i,j: mui != muj).
 # Tehdään ainoistolle yksisuuntainen varianssianalyysi.
 
 malli1 <- aov(saasto94_muunnettu~as.factor(talous_koulutustaso$koulutus))
@@ -81,14 +119,8 @@ summary(malli1)
 # Residuals                               172 1.049e-04 6.101e-07   
 
 # => F-testisuure antaa p-arvon 0.114. Hylätään vastahypoteesi tasolla 0.05.
-# Koulutustasolla ei ole tilastollisesti merkitsevää vaikutusta säästöihin,
+# Aineiston perusteella koulutustasolla ei ole tilastollisesti merkitsevää vaikutusta säästöihin,
 # kun vain perus/kansakoulun suorittaneet rajataan tarkastelun ulkopuolelle.
-
-# TODO: Tulosta kaaviot.
-boxplot(nettotulot_miehet, nettotulot_naiset, col = c("skyblue", "pink"), xaxl="n", ylab = "€/kk")
-axis(1, at = c(1,2), labels = c("Miehet", "Naiset"))
-pdf('boxplot_tulot.pdf')
-dev.off()
 
 
 ##############################
